@@ -175,28 +175,23 @@
                 ];
 
                 // ==========================================
-                // 🎁 ตั้งค่าตาราง: Boxset (อัปเดตล่าสุด: BM 7, 8, 9)
+                // 🎁 ตั้งค่าตาราง: Boxset
+                // 🟢 ดึงหมายเหตุจากคอลัมน์ 5 และ 14 เรียบร้อยครับ!
                 // ==========================================
                 const boxsetBemind = [
-                    { col: 1, id: 'BM 7', channel: CH_NORMAL, remarkCol: 8 }, 
-                    { col: 2, id: 'BM 8', channel: CH_NORMAL, remarkCol: 8 },
-                    { col: 3, id: 'BM 9', channel: CH_NORMAL, remarkCol: 8 }, 
-                    { col: 4, id: 'ใส่รหัสคอลัมน์4', channel: CH_NORMAL, remarkCol: 8 }, // 🛑 ถ้ามีรหัสแก้ตรงนี้
-                    { col: 6, id: 'ใส่รหัสคอลัมน์6', channel: CH_NORMAL, remarkCol: 8 }  // 🛑 ถ้ามีรหัสแก้ตรงนี้
+                    { col: 1, id: 'BM 7', channel: CH_NORMAL, remarkCol: 5 }, 
+                    { col: 2, id: 'BM 8', channel: CH_NORMAL, remarkCol: 5 },
+                    { col: 3, id: 'BM 9', channel: CH_NORMAL, remarkCol: 5 }
                 ];
                 const boxsetBK = [
-                    { col: 10, id: 'BM 7', channel: CH_BK, remarkCol: 16 }, 
-                    { col: 11, id: 'BM 8', channel: CH_BK, remarkCol: 16 },
-                    { col: 12, id: 'BM 9', channel: CH_BK, remarkCol: 16 }, 
-                    { col: 13, id: 'ใส่รหัสคอลัมน์13', channel: CH_BK, remarkCol: 16 }, // 🛑 ถ้ามีรหัสแก้ตรงนี้
-                    { col: 14, id: 'ใส่รหัสคอลัมน์14', channel: CH_BK, remarkCol: 16 }  // 🛑 ถ้ามีรหัสแก้ตรงนี้
+                    { col: 10, id: 'BM 7', channel: CH_BK, remarkCol: 14 }, 
+                    { col: 11, id: 'BM 8', channel: CH_BK, remarkCol: 14 },
+                    { col: 12, id: 'BM 9', channel: CH_BK, remarkCol: 14 }
                 ];
                 const boxsetSupport = [
-                    { col: 1, id: 'BM 7', channel: CH_SUPPORT, remarkCol: 8 }, 
-                    { col: 2, id: 'BM 8', channel: CH_SUPPORT, remarkCol: 8 },
-                    { col: 3, id: 'BM 9', channel: CH_SUPPORT, remarkCol: 8 }, 
-                    { col: 4, id: 'ใส่รหัสคอลัมน์4', channel: CH_SUPPORT, remarkCol: 8 }, // 🛑 ถ้ามีรหัสแก้ตรงนี้
-                    { col: 6, id: 'ใส่รหัสคอลัมน์6', channel: CH_SUPPORT, remarkCol: 8 }  // 🛑 ถ้ามีรหัสแก้ตรงนี้
+                    { col: 1, id: 'BM 7', channel: CH_SUPPORT, remarkCol: 5 }, 
+                    { col: 2, id: 'BM 8', channel: CH_SUPPORT, remarkCol: 5 },
+                    { col: 3, id: 'BM 9', channel: CH_SUPPORT, remarkCol: 5 }
                 ];
 
                 for (let i = 8; i < rows.length; i++) { 
@@ -211,14 +206,13 @@
 
                         let activeMappings = [];
 
-                        // 🟢 แยกการใช้แผนที่คอลัมน์ตามประเภทไฟล์ที่เลือก
                         if (fileType === 'normal') {
-                            if (i >= 8 && i <= 41) activeMappings = normalTop;           // แถว 9-42
-                            else if (i >= 44 && i <= 77) activeMappings = normalBottom;  // แถว 45-78
+                            if (i >= 8 && i <= 41) activeMappings = normalTop;           
+                            else if (i >= 44 && i <= 77) activeMappings = normalBottom;  
                         } 
                         else if (fileType === 'boxset') {
-                            if (i >= 9 && i <= 42) activeMappings = [...boxsetBemind, ...boxsetBK]; // แถว 10-43
-                            else if (i >= 48 && i <= 78) activeMappings = boxsetSupport;            // แถว 49-79
+                            if (i >= 9 && i <= 42) activeMappings = [...boxsetBemind, ...boxsetBK]; 
+                            else if (i >= 48 && i <= 78) activeMappings = boxsetSupport;            
                         }
 
                         if(activeMappings.length > 0) {
