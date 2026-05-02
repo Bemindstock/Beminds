@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>สรุปรายงานสต๊อก | Bemind Stock</title>
+    <title>สรุปรายงาน | Bemind Stock</title>
     <link rel="icon" href="logo.jpg" type="image/jpeg">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="style.css">
-    <!-- โหลดไลบรารี Excel -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    
+    <!-- 🟢 เพิ่มไลบรารีสำหรับสร้าง PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- เพิ่มฟอนต์ไทยเพื่อให้ PDF สวยงาม -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="d-flex" id="wrapper">
@@ -17,19 +20,17 @@
         
         <div id="sidebar-wrapper">
             <div class="text-center py-4 border-bottom">
-                <img src="logo.jpg" alt="Logo" style="width: 50px; height: 50px; border-radius: 12px;">
+                <img src="logo.jpg" alt="Logo" style="width: 50px; height: 50px; border-radius: 12px; object-fit: cover;">
                 <div class="mt-2 fw-bold" style="color: var(--brand-teal);">Bemind Stock</div>
             </div>
             <div class="list-group list-group-flush mt-3">
-                <a href="report.html" class="list-group-item list-group-item-action"><i class="bi bi-file-earmark-bar-graph me-2"></i> สรุปรายงาน (Excel)</a>
                 <a href="dashboard.html" class="list-group-item list-group-item-action"><i class="bi bi-grid me-2"></i> ภาพรวมคลัง</a>
                 <a href="receive.html" class="list-group-item list-group-item-action"><i class="bi bi-box-arrow-in-down me-2"></i> รับเข้า (IN)</a>
                 <a href="issue.html" class="list-group-item list-group-item-action"><i class="bi bi-box-arrow-up me-2"></i> เบิกออก (OUT)</a>
                 <a href="import.html" class="list-group-item list-group-item-action"><i class="bi bi-file-earmark-excel me-2"></i> อัปโหลดไฟล์ Excel</a>
                 <a href="manage.html" class="list-group-item list-group-item-action"><i class="bi bi-boxes me-2"></i> จัดการสินค้า</a>
                 <a href="history.html" class="list-group-item list-group-item-action"><i class="bi bi-clock-history me-2"></i> ประวัติรายการ</a>
-                <!-- 🟢 เมนูใหม่ -->
-                <a href="report.html" class="list-group-item list-group-item-action active"><i class="bi bi-file-earmark-bar-graph me-2"></i> สรุปรายงาน (Excel)</a>
+                <a href="report.html" class="list-group-item list-group-item-action active"><i class="bi bi-file-earmark-pdf me-2"></i> สรุปรายงาน (PDF)</a>
                 <a href="#" onclick="logout()" class="list-group-item list-group-item-action text-danger mt-5"><i class="bi bi-power me-2"></i> ออกจากระบบ</a>
             </div>
         </div>
@@ -37,216 +38,218 @@
         <div id="page-content-wrapper" class="w-100">
             <nav class="navbar navbar-light bg-white py-3 px-4 border-bottom">
                 <button class="btn btn-light d-md-none me-3" onclick="toggleMenu()"><i class="bi bi-list"></i></button>
-                <h5 class="m-0 fw-bold"><i class="bi bi-file-earmark-bar-graph text-primary"></i> สรุปรายงานการเคลื่อนไหวสต๊อก</h5>
+                <h5 class="m-0 fw-bold"><i class="bi bi-file-earmark-pdf text-danger"></i> รายงานความเคลื่อนไหวสต๊อก</h5>
             </nav>
 
             <div class="container-fluid p-4">
-                <div class="card-custom mb-4">
+                <div class="card-custom mb-4 p-4">
                     <div class="row g-3 align-items-end">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label small fw-bold">ตั้งแต่วันที่</label>
-                            <input type="date" id="start-date" class="form-control" required>
+                            <input type="date" id="startDate" class="form-control">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label small fw-bold">ถึงวันที่</label>
-                            <input type="date" id="end-date" class="form-control" required>
+                            <input type="date" id="endDate" class="form-control">
                         </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-dark w-100 h-100 py-2 shadow-sm" onclick="calculateReport()" id="calcBtn">
-                                <i class="bi bi-calculator me-1"></i> คำนวณข้อมูล
+                        <div class="col-md-4 d-flex gap-2">
+                            <button class="btn btn-teal w-100" onclick="generateReport()" id="searchBtn">
+                                <i class="bi bi-search me-1"></i> ดูรายงาน
                             </button>
-                        </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-success w-100 h-100 py-2 shadow-sm" onclick="exportToExcel()" id="exportBtn" disabled>
-                                <i class="bi bi-file-earmark-excel me-1"></i> ดาวน์โหลด Excel
+                            <!-- 🟢 เปลี่ยนปุ่มเป็น Export PDF -->
+                            <button class="btn btn-danger w-100 shadow-sm" onclick="exportToPDF()" id="exportBtn" style="display: none;">
+                                <i class="bi bi-file-earmark-pdf me-1"></i> โหลด PDF
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <div class="card-custom p-0 overflow-hidden">
-                    <div class="bg-light px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
-                        <h6 class="m-0 fw-bold">ผลการคำนวณสต๊อก</h6>
-                        <span id="date-range-text" class="text-muted small"></span>
+                <div class="card-custom p-0 overflow-hidden" id="reportCard" style="display: none;">
+                    <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 fw-bold text-dark">ผลการคำนวณสต๊อก</h6>
+                        <span class="badge bg-secondary" id="report-info"></span>
                     </div>
                     <div class="table-responsive" style="max-height: 60vh; overflow-y: auto;">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light" style="position: sticky; top: 0; z-index: 1;">
+                        <!-- 🟢 ตัดคอลัมน์ยอดยกมาทิ้ง -->
+                        <table class="table table-hover align-middle mb-0 small" id="reportTable">
+                            <thead class="bg-white" style="position: sticky; top: 0; z-index: 1;">
                                 <tr>
-                                    <th class="ps-4 py-3">รหัสสินค้า</th>
+                                    <th class="ps-4">รหัสสินค้า</th>
                                     <th>ชื่อสินค้า</th>
-                                    <th class="text-center text-muted">ยอดยกมา (ก่อนหน้า)</th>
-                                    <th class="text-center text-teal">รับเข้า (+)</th>
-                                    <th class="text-center text-pink">เบิกออก (-)</th>
-                                    <th class="text-center fw-bold text-primary pe-4">คงเหลือ (สิ้นสุด)</th>
+                                    <th class="text-center text-success">รับเข้า (+)</th>
+                                    <th class="text-center text-danger">เบิกออก (-)</th>
+                                    <th class="text-center text-primary pe-4">คงเหลือ (สิ้นสุด)</th>
                                 </tr>
                             </thead>
                             <tbody id="report-tbody">
-                                <tr><td colspan="6" class="text-center py-5 text-muted">กรุณาเลือกช่วงเวลาและกด "คำนวณข้อมูล"</td></tr>
+                                <tr><td colspan="5" class="text-center py-5">กำลังโหลดข้อมูล...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 
     <script>
-        // 🛑 นำ API URL ของคุณมาวางตรงนี้
+        // 🛑 ใส่ API URL ของคุณที่นี่
         const API_URL = "https://script.google.com/macros/s/AKfycbxjnQQXVuLGnEV-eRYha3vkQUVwMoVleh0Ndmaoh3rfjn9FtYrgGVSYNfzBlx2mg4Fm/exec";
         
         let allProducts = [];
         let allHistory = [];
-        let finalReportData = []; // เก็บข้อมูลที่คำนวณเสร็จแล้วรอ Export
 
         function toggleMenu() { document.getElementById("wrapper").classList.toggle("toggled"); }
+        function logout() { localStorage.removeItem('inventory_user'); window.location.href = "index.html"; }
 
         window.onload = async function() {
             if(!localStorage.getItem('inventory_user')) window.location.href = "index.html";
             
-            // ตั้งค่าวันที่เริ่มต้นเป็น วันที่ 1 ถึง วันปัจจุบัน ของเดือนนี้
-            const now = new Date();
-            const firstDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-            const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-            
-            document.getElementById('start-date').value = firstDay;
-            document.getElementById('end-date').value = today;
+            // ตั้งค่าวันที่เริ่มต้นเป็นต้นเดือน ถึง วันนี้
+            const date = new Date();
+            const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+            document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('endDate').value = date.toISOString().split('T')[0];
 
-            // โหลดข้อมูลดิบมารอไว้ล่วงหน้าเลย จะได้คำนวณไวๆ
+            await loadData();
+        }
+
+        async function loadData() {
             try {
-                const resInit = fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "getInitData" }) });
-                const resHist = fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "getHistory" }) });
+                // ดึงข้อมูลสินค้าและประวัติมาเตรียมไว้
+                const resData = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "getInitData" }) }).then(r => r.json());
+                const resHist = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "getHistory" }) }).then(r => r.json());
                 
-                const [initData, histData] = await Promise.all([resInit, resHist]);
-                const initJson = await initData.json();
-                const histJson = await histData.json();
-                
-                if(initJson.success) allProducts = initJson.data.products;
-                if(histJson.success) allHistory = histJson.data;
+                if(resData.success) allProducts = resData.data.products;
+                if(resHist.success) allHistory = resHist.data;
             } catch(e) {
-                console.error("โหลดข้อมูลพื้นฐานไม่สำเร็จ");
+                console.error("โหลดข้อมูลล้มเหลว", e);
             }
         }
 
-        // ตัวแปลงวันที่จากรูปแบบ "dd/MM/yyyy HH:mm" ของ Google Sheets ให้เป็น Object Date
-        function parseHistoryDate(dateStr) {
-            if(!dateStr) return new Date(0);
-            let datePart = dateStr.split(" ")[0]; // เอาแค่ "dd/MM/yyyy"
-            let p = datePart.split("/");
-            if(p.length === 3) {
-                return new Date(p[2], p[1]-1, p[0]); 
-            }
-            return new Date(dateStr); 
-        }
+        function generateReport() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            if(!start || !end) { alert("กรุณาเลือกช่วงวันที่"); return; }
 
-        function calculateReport() {
-            const startDateVal = document.getElementById('start-date').value;
-            const endDateVal = document.getElementById('end-date').value;
+            document.getElementById('reportCard').style.display = 'block';
+            document.getElementById('exportBtn').style.display = 'block';
+            document.getElementById('report-info').innerText = `ข้อมูลระหว่างวันที่ ${start} ถึง ${end}`;
 
-            if(!startDateVal || !endDateVal) { alert("กรุณาเลือกวันที่ให้ครบถ้วน"); return; }
-            if(allProducts.length === 0 || allHistory.length === 0) {
-                alert("กำลังโหลดฐานข้อมูลจากหลังบ้าน กรุณารอสักครู่แล้วกดใหม่ครับ");
-                return;
-            }
+            let reportData = [];
+            const startD = new Date(start);
+            const endD = new Date(end);
+            endD.setHours(23, 59, 59);
 
-            const btn = document.getElementById('calcBtn');
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> กำลังคำนวณ...';
-            btn.disabled = true;
-
-            // แปลงวันที่ผู้ใช้เลือกให้เป็น Date (ตั้งเวลาให้ครอบคลุมทั้งวัน)
-            const sDate = new Date(startDateVal); sDate.setHours(0,0,0,0);
-            const eDate = new Date(endDateVal); eDate.setHours(23,59,59,999);
-
-            // 1. สร้างโครงสร้างกระเป๋าเก็บข้อมูลสินค้าแต่ละตัว
-            let reportMap = {};
             allProducts.forEach(p => {
-                reportMap[p.id] = { id: p.id, name: p.name, startBal: 0, inQty: 0, outQty: 0, endBal: 0 };
-            });
+                let sumIn = 0;
+                let sumOut = 0;
 
-            // 2. วนลูปอ่านประวัติทั้งหมดเพื่อคำนวณ
-            allHistory.forEach(h => {
-                const hDate = parseHistoryDate(h.date);
-                const type = h.type;
-                const qty = parseInt(h.qty) || 0;
-                
-                let prod = reportMap[h.id];
-                if(!prod) return; // ข้ามถ้าเป็นสินค้าที่ถูกลบไปแล้ว
+                allHistory.forEach(h => {
+                    if(h.id.toString() === p.id.toString()) {
+                        let [d, m, y] = h.date.split(' ')[0].split('/');
+                        let hDate = new Date(`${y}-${m}-${d}`);
+                        
+                        if(hDate >= startD && hDate <= endD) {
+                            if(h.type === 'รับเข้า') sumIn += Number(h.qty);
+                            if(h.type === 'เบิกออก') sumOut += Number(h.qty);
+                        }
+                    }
+                });
 
-                // ถ้าเป็นประวัติ "ก่อน" วันที่เริ่มต้น -> นำไปคำนวณเป็น 'ยอดยกมา'
-                if(hDate < sDate) {
-                    if(type === 'รับเข้า') prod.startBal += qty;
-                    if(type === 'เบิกออก') prod.startBal -= qty;
-                } 
-                // ถ้าเป็นประวัติ "ใน" ช่วงเวลาที่เลือก -> นับยอด รับเข้า/เบิกออก
-                else if (hDate >= sDate && hDate <= eDate) {
-                    if(type === 'รับเข้า') prod.inQty += qty;
-                    if(type === 'เบิกออก') prod.outQty += qty;
+                // แสดงเฉพาะสินค้าที่มีการเคลื่อนไหว หรือมียอดคงเหลือ
+                if(sumIn > 0 || sumOut > 0 || p.balance !== 0) {
+                    reportData.push({
+                        id: p.id,
+                        name: p.name,
+                        in: sumIn,
+                        out: sumOut,
+                        balance: p.balance
+                    });
                 }
             });
 
-            // 3. คำนวณยอดคงเหลือ (สิ้นสุด) = ยอดยกมา + รับเข้า - เบิกออก
-            finalReportData = [];
-            for (let key in reportMap) {
-                let p = reportMap[key];
-                p.endBal = p.startBal + p.inQty - p.outQty;
-                finalReportData.push(p);
+            const tbody = document.getElementById('report-tbody');
+            if(reportData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted">ไม่พบข้อมูลการเคลื่อนไหวในช่วงเวลานี้</td></tr>';
+                return;
             }
 
-            // 4. แสดงผลลงในตาราง
-            renderTable(startDateVal, endDateVal);
-            
-            btn.innerHTML = '<i class="bi bi-calculator me-1"></i> คำนวณข้อมูล';
-            btn.disabled = false;
-            document.getElementById('exportBtn').disabled = false; // เปิดปุ่มโหลด Excel
-        }
-
-        function renderTable(start, end) {
-            document.getElementById('date-range-text').innerText = `ข้อมูลระหว่างวันที่ ${start} ถึง ${end}`;
-            const tbody = document.getElementById('report-tbody');
             let html = '';
-
-            finalReportData.forEach(p => {
+            reportData.forEach(item => {
                 html += `
                 <tr>
-                    <td class="ps-4 fw-bold">${p.id}</td>
-                    <td>${p.name}</td>
-                    <td class="text-center fw-bold text-muted bg-light">${p.startBal}</td>
-                    <td class="text-center fw-bold text-teal">+ ${p.inQty}</td>
-                    <td class="text-center fw-bold text-pink">- ${p.outQty}</td>
-                    <td class="text-center fw-bold text-primary bg-primary bg-opacity-10 pe-4 fs-5">${p.endBal}</td>
+                    <td class="ps-4 fw-bold">${item.id}</td>
+                    <td>${item.name}</td>
+                    <td class="text-center text-success fw-bold">+ ${item.in.toLocaleString()}</td>
+                    <td class="text-center text-danger fw-bold">- ${item.out.toLocaleString()}</td>
+                    <td class="text-center text-primary fw-bold pe-4">${item.balance.toLocaleString()}</td>
                 </tr>`;
             });
             tbody.innerHTML = html;
         }
 
-        function exportToExcel() {
-            if(finalReportData.length === 0) return;
+        // 🟢 ฟังก์ชันสำหรับสร้างและโหลดไฟล์ PDF
+        function exportToPDF() {
+            const btn = document.getElementById('exportBtn');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังสร้าง PDF...';
+            btn.disabled = true;
 
-            // สร้าง Header ของ Excel
-            const ws_data = [
-                ["สรุปรายงานการเคลื่อนไหวคลังสินค้า Bemind"],
-                ["ตั้งแต่วันที่:", document.getElementById('start-date').value, "ถึงวันที่:", document.getElementById('end-date').value],
-                [], // เว้นบรรทัด
-                ["รหัสสินค้า", "ชื่อสินค้า", "ยอดยกมา (เริ่มต้น)", "รับเข้า (+)", "เบิกออก (-)", "คงเหลือ (สิ้นสุด)"]
-            ];
+            // 1. สร้างกระดาษจำลองสำหรับปริ้น PDF
+            const pdfContainer = document.createElement('div');
+            pdfContainer.style.padding = '20px';
+            pdfContainer.style.fontFamily = "'Sarabun', sans-serif"; // ใช้ฟอนต์ไทย
+            pdfContainer.style.color = '#333';
 
-            // ยัดข้อมูลลงทีละบรรทัด
-            finalReportData.forEach(p => {
-                ws_data.push([p.id, p.name, p.startBal, p.inQty, p.outQty, p.endBal]);
+            // 2. ใส่ Header (โลโก้ + ชื่อบริษัท)
+            const dateText = document.getElementById('report-info').innerText;
+            pdfContainer.innerHTML = `
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <img src="logo.jpg" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;" onerror="this.style.display='none'">
+                    <h2 style="margin: 0; color: #008080; font-weight: bold; font-family: 'Sarabun', sans-serif;">บริษัท Bemind</h2>
+                    <h4 style="margin: 10px 0 5px 0; font-family: 'Sarabun', sans-serif;">รายงานสรุปความเคลื่อนไหวสต๊อกสินค้า</h4>
+                    <p style="margin: 0; color: #666; font-size: 14px; font-family: 'Sarabun', sans-serif;">${dateText}</p>
+                </div>
+            `;
+
+            // 3. ก๊อปปี้ตารางจากหน้าเว็บมาใส่
+            const tableClone = document.getElementById('reportTable').cloneNode(true);
+            tableClone.classList.remove('table-hover');
+            tableClone.style.width = '100%';
+            tableClone.style.borderCollapse = 'collapse';
+            tableClone.style.fontSize = '12px';
+
+            // แต่งเส้นขอบตารางสำหรับ PDF
+            const cells = tableClone.querySelectorAll('th, td');
+            cells.forEach(cell => {
+                cell.style.border = '1px solid #dee2e6';
+                cell.style.padding = '8px';
+                cell.style.fontFamily = "'Sarabun', sans-serif";
             });
 
-            // แปลงเป็นไฟล์ Excel
-            const ws = XLSX.utils.aoa_to_sheet(ws_data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Stock Report");
-            
-            // ตั้งชื่อไฟล์พร้อมวันที่
-            const fileName = `Stock_Report_${document.getElementById('start-date').value}.xlsx`;
-            XLSX.writeFile(wb, fileName);
-        }
+            pdfContainer.appendChild(tableClone);
 
-        function logout() { localStorage.removeItem('inventory_user'); window.location.href = "index.html"; }
+            // 4. ใส่ Footer (วันที่ออกรายงาน)
+            const printDate = new Date().toLocaleString('th-TH');
+            const footer = document.createElement('div');
+            footer.innerHTML = `<p style="text-align: right; font-size: 10px; color: #999; margin-top: 20px; font-family: 'Sarabun', sans-serif;">พิมพ์เมื่อ: ${printDate}</p>`;
+            pdfContainer.appendChild(footer);
+
+            // 5. ตั้งค่าการเซฟ PDF
+            const opt = {
+                margin:       10,
+                filename:     'Bemind_Stock_Report.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true }, // scale: 2 ทำให้ภาพคมชัดขึ้น
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // 6. สั่ง Generate PDF
+            html2pdf().set(opt).from(pdfContainer).save().then(() => {
+                // รีเซ็ตปุ่มกลับมาเหมือนเดิม
+                btn.innerHTML = '<i class="bi bi-file-earmark-pdf me-1"></i> โหลด PDF';
+                btn.disabled = false;
+            });
+        }
     </script>
 </body>
 </html>
