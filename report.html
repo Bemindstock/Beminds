@@ -9,9 +9,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="style.css">
     
-    <!-- 🟢 เพิ่มไลบรารีสำหรับสร้าง PDF -->
+    <!-- ไลบรารีสำหรับสร้าง PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- เพิ่มฟอนต์ไทยเพื่อให้ PDF สวยงาม -->
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -56,7 +55,6 @@
                             <button class="btn btn-teal w-100" onclick="generateReport()" id="searchBtn">
                                 <i class="bi bi-search me-1"></i> ดูรายงาน
                             </button>
-                            <!-- 🟢 เปลี่ยนปุ่มเป็น Export PDF -->
                             <button class="btn btn-danger w-100 shadow-sm" onclick="exportToPDF()" id="exportBtn" style="display: none;">
                                 <i class="bi bi-file-earmark-pdf me-1"></i> โหลด PDF
                             </button>
@@ -66,19 +64,18 @@
 
                 <div class="card-custom p-0 overflow-hidden" id="reportCard" style="display: none;">
                     <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
-                        <h6 class="m-0 fw-bold text-dark">ผลการคำนวณสต๊อก</h6>
+                        <h6 class="m-0 fw-bold text-dark">ผลการคำนวณสต๊อก (เฉพาะช่วงเวลาที่เลือก)</h6>
                         <span class="badge bg-secondary" id="report-info"></span>
                     </div>
                     <div class="table-responsive" style="max-height: 60vh; overflow-y: auto;">
-                        <!-- 🟢 ตัดคอลัมน์ยอดยกมาทิ้ง -->
                         <table class="table table-hover align-middle mb-0 small" id="reportTable">
                             <thead class="bg-white" style="position: sticky; top: 0; z-index: 1;">
                                 <tr>
-                                    <th class="ps-4">รหัสสินค้า</th>
-                                    <th>ชื่อสินค้า</th>
-                                    <th class="text-center text-success">รับเข้า (+)</th>
-                                    <th class="text-center text-danger">เบิกออก (-)</th>
-                                    <th class="text-center text-primary pe-4">คงเหลือ (สิ้นสุด)</th>
+                                    <th class="ps-4 border-bottom">รหัสสินค้า</th>
+                                    <th class="border-bottom">ชื่อสินค้า</th>
+                                    <th class="text-center text-success border-bottom">รับเข้า (+)</th>
+                                    <th class="text-center text-danger border-bottom">เบิกออก (-)</th>
+                                    <th class="text-center text-primary pe-4 border-bottom">คงเหลือ (รับ-เบิก)</th>
                                 </tr>
                             </thead>
                             <tbody id="report-tbody">
@@ -104,7 +101,6 @@
         window.onload = async function() {
             if(!localStorage.getItem('inventory_user')) window.location.href = "index.html";
             
-            // ตั้งค่าวันที่เริ่มต้นเป็นต้นเดือน ถึง วันนี้
             const date = new Date();
             const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
             document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
@@ -115,7 +111,6 @@
 
         async function loadData() {
             try {
-                // ดึงข้อมูลสินค้าและประวัติมาเตรียมไว้
                 const resData = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "getInitData" }) }).then(r => r.json());
                 const resHist = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "getHistory" }) }).then(r => r.json());
                 
@@ -156,14 +151,17 @@
                     }
                 });
 
-                // แสดงเฉพาะสินค้าที่มีการเคลื่อนไหว หรือมียอดคงเหลือ
-                if(sumIn > 0 || sumOut > 0 || p.balance !== 0) {
+                // 🟢 คำนวณคงเหลือเฉพาะช่วงเวลาที่เลือก (รับเข้า - เบิกออก ในช่วงนั้น)
+                let periodBalance = sumIn - sumOut;
+
+                // 🟢 แสดงเฉพาะสินค้าที่มีการเคลื่อนไหวในช่วงเวลานี้เท่านั้น
+                if(sumIn > 0 || sumOut > 0) {
                     reportData.push({
                         id: p.id,
                         name: p.name,
                         in: sumIn,
                         out: sumOut,
-                        balance: p.balance
+                        balance: periodBalance
                     });
                 }
             });
@@ -176,31 +174,31 @@
 
             let html = '';
             reportData.forEach(item => {
+                // ถ้าเบิกออกมากกว่ารับเข้าในช่วงนั้น ยอดจะเป็นติดลบ ให้เป็นสีแดงจะได้ดูง่ายขึ้น
+                let balanceColor = item.balance < 0 ? 'text-danger' : 'text-primary';
+                
                 html += `
                 <tr>
                     <td class="ps-4 fw-bold">${item.id}</td>
                     <td>${item.name}</td>
                     <td class="text-center text-success fw-bold">+ ${item.in.toLocaleString()}</td>
                     <td class="text-center text-danger fw-bold">- ${item.out.toLocaleString()}</td>
-                    <td class="text-center text-primary fw-bold pe-4">${item.balance.toLocaleString()}</td>
+                    <td class="text-center ${balanceColor} fw-bold pe-4">${item.balance.toLocaleString()}</td>
                 </tr>`;
             });
             tbody.innerHTML = html;
         }
 
-        // 🟢 ฟังก์ชันสำหรับสร้างและโหลดไฟล์ PDF
         function exportToPDF() {
             const btn = document.getElementById('exportBtn');
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังสร้าง PDF...';
             btn.disabled = true;
 
-            // 1. สร้างกระดาษจำลองสำหรับปริ้น PDF
             const pdfContainer = document.createElement('div');
             pdfContainer.style.padding = '20px';
-            pdfContainer.style.fontFamily = "'Sarabun', sans-serif"; // ใช้ฟอนต์ไทย
+            pdfContainer.style.fontFamily = "'Sarabun', sans-serif";
             pdfContainer.style.color = '#333';
 
-            // 2. ใส่ Header (โลโก้ + ชื่อบริษัท)
             const dateText = document.getElementById('report-info').innerText;
             pdfContainer.innerHTML = `
                 <div style="text-align: center; margin-bottom: 30px;">
@@ -211,14 +209,12 @@
                 </div>
             `;
 
-            // 3. ก๊อปปี้ตารางจากหน้าเว็บมาใส่
             const tableClone = document.getElementById('reportTable').cloneNode(true);
             tableClone.classList.remove('table-hover');
             tableClone.style.width = '100%';
             tableClone.style.borderCollapse = 'collapse';
             tableClone.style.fontSize = '12px';
 
-            // แต่งเส้นขอบตารางสำหรับ PDF
             const cells = tableClone.querySelectorAll('th, td');
             cells.forEach(cell => {
                 cell.style.border = '1px solid #dee2e6';
@@ -228,24 +224,20 @@
 
             pdfContainer.appendChild(tableClone);
 
-            // 4. ใส่ Footer (วันที่ออกรายงาน)
             const printDate = new Date().toLocaleString('th-TH');
             const footer = document.createElement('div');
             footer.innerHTML = `<p style="text-align: right; font-size: 10px; color: #999; margin-top: 20px; font-family: 'Sarabun', sans-serif;">พิมพ์เมื่อ: ${printDate}</p>`;
             pdfContainer.appendChild(footer);
 
-            // 5. ตั้งค่าการเซฟ PDF
             const opt = {
                 margin:       10,
                 filename:     'Bemind_Stock_Report.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true }, // scale: 2 ทำให้ภาพคมชัดขึ้น
+                html2canvas:  { scale: 2, useCORS: true },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // 6. สั่ง Generate PDF
             html2pdf().set(opt).from(pdfContainer).save().then(() => {
-                // รีเซ็ตปุ่มกลับมาเหมือนเดิม
                 btn.innerHTML = '<i class="bi bi-file-earmark-pdf me-1"></i> โหลด PDF';
                 btn.disabled = false;
             });
