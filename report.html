@@ -1,3 +1,6 @@
+นี่คือโค้ดทั้งหมดที่รวมฟังก์ชันการแบ่งหน้า PDF (พร้อมหัวกระดาษ, หัวตาราง, และเลขหน้า) เข้าไปเรียบร้อยแล้วครับ คุณสามารถก็อปปี้โค้ดนี้ไปวางทับไฟล์เดิมได้เลยครับ
+
+```html
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -90,7 +93,6 @@
                         <span class="badge bg-secondary" id="report-info"></span>
                     </div>
                     
-                    <!-- แจ้งเตือนแอดมิน -->
                     <div id="editHint" class="bg-warning bg-opacity-10 text-dark p-2 text-center small fw-bold border-bottom" style="display: none;">
                         💡 คุณคือ Admin: สามารถคลิกที่ตัวเลขและช่องหมายเหตุ เพื่อแก้ไขข้อมูลก่อนปรินท์ PDF ได้ (ไม่ส่งผลกระทบต่อสต๊อกจริง)
                     </div>
@@ -263,48 +265,105 @@
             document.querySelectorAll('.editable-cell').forEach(el => el.classList.remove('editable-cell'));
 
             const pdfContainer = document.createElement('div');
-            pdfContainer.style.padding = '20px';
             pdfContainer.style.fontFamily = "'Sarabun', sans-serif";
             pdfContainer.style.color = '#333';
 
             const dateText = document.getElementById('report-info').innerText;
-            pdfContainer.innerHTML = `
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <img src="logo.jpg" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;" onerror="this.style.display='none'">
-                    <h2 style="margin: 0; color: #008080; font-weight: bold; font-family: 'Sarabun', sans-serif;">บริษัท Bemind</h2>
-                    <h4 style="margin: 10px 0 5px 0; font-family: 'Sarabun', sans-serif;">รายงานสรุปความเคลื่อนไหวสต๊อกสินค้า</h4>
-                    <p style="margin: 0; color: #666; font-size: 14px; font-family: 'Sarabun', sans-serif;">${dateText}</p>
-                </div>
-            `;
-
-            const tableClone = document.getElementById('reportTable').cloneNode(true);
-            tableClone.classList.remove('table-hover');
-            tableClone.style.width = '100%';
-            tableClone.style.borderCollapse = 'collapse';
-            tableClone.style.fontSize = '12px';
-
-            const cells = tableClone.querySelectorAll('th, td');
-            cells.forEach(cell => {
-                cell.style.border = '1px solid #dee2e6';
-                cell.style.padding = '8px';
-                cell.style.fontFamily = "'Sarabun', sans-serif";
-            });
-
-            pdfContainer.appendChild(tableClone);
-
             const printDate = new Date().toLocaleString('th-TH');
-            const footer = document.createElement('div');
-            footer.innerHTML = `<p style="text-align: right; font-size: 10px; color: #999; margin-top: 20px; font-family: 'Sarabun', sans-serif;">พิมพ์เมื่อ: ${printDate}</p>`;
-            pdfContainer.appendChild(footer);
 
+            // 1. ดึงแถวข้อมูลทั้งหมดจากตาราง
+            const tbodyRows = Array.from(document.querySelectorAll('#report-tbody tr'));
+
+            // 🟢 กำหนดจำนวนแถวสูงสุดต่อ 1 หน้ากระดาษ (ปรับเพิ่ม/ลดได้ ถ้ารายการยาวเกินหน้าให้ลดตัวเลขนี้ลง)
+            const rowsPerPage = 18; 
+            const totalPages = Math.ceil(tbodyRows.length / rowsPerPage) || 1;
+
+            // ดึงโครงสร้างส่วนหัวตาราง (thead) มาเก็บไว้เตรียมวนลูปแปะทุกหน้า
+            const theadHTML = document.querySelector('#reportTable thead').innerHTML;
+
+            // 2. วนลูปสร้างกระดาษทีละหน้า
+            for (let i = 0; i < totalPages; i++) {
+                // สร้าง container สำหรับแต่ละหน้า
+                const pageDiv = document.createElement('div');
+                pageDiv.style.padding = '10px 20px';
+                
+                // สั่งให้ตัดขึ้นหน้าใหม่เมื่อจบ div นี้ (ยกเว้นหน้าสุดท้าย)
+                if (i < totalPages - 1) {
+                    pageDiv.style.pageBreakAfter = 'always';
+                }
+
+                // --- สร้างหัวกระดาษ (นำมาด้วยทุกหน้า พร้อมเลขหน้า) ---
+                pageDiv.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 20px; position: relative;">
+                        <img src="logo.jpg" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;" onerror="this.style.display='none'">
+                        <h2 style="margin: 0; color: #008080; font-weight: bold; font-family: 'Sarabun', sans-serif; font-size: 22px;">บริษัท Bemind</h2>
+                        <h4 style="margin: 8px 0 5px 0; font-family: 'Sarabun', sans-serif; font-size: 16px;">รายงานสรุปความเคลื่อนไหวสต๊อกสินค้า</h4>
+                        <p style="margin: 0; color: #666; font-size: 14px; font-family: 'Sarabun', sans-serif;">${dateText}</p>
+
+                        <div style="position: absolute; top: 0; right: 0; font-size: 12px; color: #555; font-weight: bold; font-family: 'Sarabun', sans-serif;">
+                            หน้า ${i + 1} / ${totalPages}
+                        </div>
+                    </div>
+                `;
+
+                // --- สร้างตารางและหัวตาราง (นำมาด้วยทุกหน้า) ---
+                const tableClone = document.createElement('table');
+                tableClone.style.width = '100%';
+                tableClone.style.borderCollapse = 'collapse';
+                tableClone.style.fontSize = '12px';
+                tableClone.style.fontFamily = "'Sarabun', sans-serif";
+
+                // แปะ thead
+                tableClone.innerHTML += `<thead>${theadHTML}</thead>`;
+
+                // จัด Style ให้กับ thead (เส้นขอบ)
+                const thCells = tableClone.querySelectorAll('th');
+                thCells.forEach(th => {
+                    th.style.border = '1px solid #dee2e6';
+                    th.style.padding = '8px';
+                    th.style.color = '#333';
+                });
+
+                // --- ดึงข้อมูลใส่ลงแถวทีละส่วน (หน้าละ 18 แถว) ---
+                const tbody = document.createElement('tbody');
+                const startRow = i * rowsPerPage;
+                const endRow = startRow + rowsPerPage;
+                const currentRows = tbodyRows.slice(startRow, endRow);
+
+                currentRows.forEach(row => {
+                    const clonedRow = row.cloneNode(true); // ก็อปปี้แถวแบบนำสีแบคกราวด์มาด้วย
+                    // จัด Style ให้กับ td
+                    const tdCells = clonedRow.querySelectorAll('td');
+                    tdCells.forEach(td => {
+                        td.style.border = '1px solid #dee2e6';
+                        td.style.padding = '8px';
+                    });
+                    tbody.appendChild(clonedRow);
+                });
+
+                tableClone.appendChild(tbody);
+                pageDiv.appendChild(tableClone);
+
+                // --- เพิ่มท้ายกระดาษ (วันที่พิมพ์) ---
+                const footer = document.createElement('div');
+                footer.innerHTML = `<p style="text-align: right; font-size: 10px; color: #999; margin-top: 15px; font-family: 'Sarabun', sans-serif;">พิมพ์เมื่อ: ${printDate}</p>`;
+                pageDiv.appendChild(footer);
+
+                // นำหน้าประกอบเข้ากับเอกสารหลัก
+                pdfContainer.appendChild(pageDiv);
+            }
+
+            // ตั้งค่า PDF
             const opt = {
-                margin:       10,
+                margin:       10, // ขอบกระดาษ (mm)
                 filename:     'Bemind_Stock_Report.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: 'css' } // 🟢 สำคัญมาก: เพื่อให้ html2pdf เข้าใจคำสั่งตัดหน้า (pageBreakAfter)
             };
 
+            // สร้าง PDF
             html2pdf().set(opt).from(pdfContainer).save().then(() => {
                 // 🟢 คืนค่ากรอบแก้ไขกลับมาให้แอดมินใช้งานต่อ
                 if(isAdmin) {
@@ -317,3 +376,5 @@
     </script>
 </body>
 </html>
+
+```
