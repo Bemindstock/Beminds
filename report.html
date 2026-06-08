@@ -98,13 +98,13 @@
                         <table class="table table-hover align-middle mb-0 small" id="reportTable">
                             <thead class="bg-white" style="position: sticky; top: 0; z-index: 1;">
                                 <tr>
-                                    <th class="ps-4 border-bottom">รหัส</th>
-                                    <th class="border-bottom">ชื่อสินค้า</th>
-                                    <th class="text-center text-muted border-bottom" style="background-color: #f8f9fa;">📦 ยอดยกมา</th>
-                                    <th class="text-center text-success border-bottom" style="background-color: #f0fff4;">🟢 รับเข้าเพิ่ม (+)</th>
-                                    <th class="text-center text-danger border-bottom" style="background-color: #fff0f0;">🔴 ยอดตัดออก (-)</th>
-                                    <th class="text-center text-primary border-bottom" style="background-color: #f0f8ff;">🛒 คงเหลือ (=)</th>
-                                    <th class="pe-4 border-bottom" style="width: 15%;">📝 หมายเหตุ</th>
+                                    <th class="ps-4 border-bottom" style="width: 10%; white-space: nowrap;">รหัส</th>
+                                    <th class="border-bottom" style="width: 25%;">ชื่อสินค้า</th>
+                                    <th class="text-center text-muted border-bottom" style="background-color: #f8f9fa; width: 12%; white-space: nowrap;">📦 ยอดยกมา</th>
+                                    <th class="text-center text-success border-bottom" style="background-color: #f0fff4; width: 14%; white-space: nowrap;">🟢 รับเข้า (+)</th>
+                                    <th class="text-center text-danger border-bottom" style="background-color: #fff0f0; width: 14%; white-space: nowrap;">🔴 ตัดออก (-)</th>
+                                    <th class="text-center text-primary border-bottom" style="background-color: #f0f8ff; width: 10%; white-space: nowrap;">🛒 คงเหลือ</th>
+                                    <th class="pe-4 border-bottom" style="width: 15%; white-space: nowrap;">📝 หมายเหตุ</th>
                                 </tr>
                             </thead>
                             <tbody id="report-tbody">
@@ -313,12 +313,13 @@
                 // แปะ thead
                 tableClone.innerHTML += `<thead>${theadHTML}</thead>`;
 
-                // จัด Style ให้กับ thead (เส้นขอบ)
+                // จัด Style ให้กับ thead (เส้นขอบและป้องกันตกบรรทัด)
                 const thCells = tableClone.querySelectorAll('th');
                 thCells.forEach(th => {
                     th.style.border = '1px solid #dee2e6';
-                    th.style.padding = '8px';
+                    th.style.padding = '6px 4px';
                     th.style.color = '#333';
+                    th.style.whiteSpace = 'nowrap'; // 🟢 ป้องกันหัวตารางตกบรรทัดใน PDF
                 });
 
                 // --- ดึงข้อมูลใส่ลงแถวทีละส่วน (หน้าละ 18 แถว) ---
